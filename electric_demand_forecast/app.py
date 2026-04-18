@@ -3,6 +3,11 @@ import pandas as pd
 import os
 from PIL import Image
 import joblib
+try:
+    import torch
+    LSTM_AVAILABLE = True
+except ImportError:
+    LSTM_AVAILABLE = False
 
 # Set page config for a premium feel
 st.set_page_config(
@@ -55,6 +60,11 @@ if not os.path.exists(METRICS_FILE):
 else:
     metrics_df = pd.read_csv(METRICS_FILE)
     
+    # 🌟 LSTM Availability Check & Filtering
+    if not LSTM_AVAILABLE:
+        st.warning("🤖 **LSTM model not available** in deployment due to environment limitations (Python 3.14 compatibility). Showing results for the best available model (XGBoost).")
+        metrics_df = metrics_df[metrics_df['Model'] != 'LSTM'].reset_index(drop=True)
+
     st.title("⚡ AI-Powered Electricity Demand Forecasting")
     st.subheader("Model Validation & Explainability Dashboard")
     
@@ -118,11 +128,12 @@ else:
         st.write("### Real-World Deployment Pipeline")
         st.markdown("""
         #### How to deploy this system:
-        1. **Inference Server**: Load `models/xgb_model.pkl` or `models/lstm_model.keras`.
-        2. **Preprocessing**: Use `models/scaler_x.pkl` and `models/scaler_y.pkl` to scale incoming data.
-        3. **Data Stream**: Connect to a Kafka or RabbitMQ stream of smart-meter data.
-        4. **Weather Integration**: Fetch real-time weather via API (OpenWeather) to update `temp`, `rhum` variables.
-        5. **Scaling**: Use a Docker container on Kubernetes to handle spikes in demand requests.
+        1. **Inference Server**: Load `models/xgb_model.pkl`. 
+        2. **LSTM Support**: LSTM requires a `torch` or `tensorflow` environment. If skipped, use XGBoost as the primary production model.
+        3. **Preprocessing**: Use `models/scaler_x.pkl` and `models/scaler_y.pkl` to scale incoming data.
+        4. **Data Stream**: Connect to a Kafka or RabbitMQ stream of smart-meter data.
+        5. **Weather Integration**: Fetch real-time weather via API (OpenWeather) to update `temp`, `rhum` variables.
+        6. **Scaling**: Use a Docker container on Kubernetes to handle spikes in demand requests.
         """)
         
         st.warning("⚠️ **Ethical Note:** Forecast errors should be used to plan backup supply (spinning reserves) to avoid grid instability.")
