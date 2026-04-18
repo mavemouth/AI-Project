@@ -29,14 +29,14 @@
 
 * **Naive Baseline**: A persistency model where future demand is predicted as the current value. Used as a reference for improvement.
 * **Linear Regression**: A classic statistical approach to model linear relationships between features and demand.
-* **XGBoost**: A powerful gradient-boosted tree ensemble capable of capturing complex non-linear interactions and feature importance.
-* **LSTM**: A Long Short-Term Memory recurrent neural network designed to identify long-range temporal dependencies in sequence data.
+* **XGBoost**: A powerful gradient-boosted tree ensemble (Tuned: 600 estimators, max_depth=6).
+* **LSTM**: A Long Short-Term Memory recurrent neural network (Tuned: 48-step input, 24-step output, 50 epochs, Early Stopping).
 
 ---
 
 ## 5. Multi-step Forecasting
 
-* **Sliding Window Approach**: A window of 4 hours (48 steps) of historical data is used to predict a horizon of 2 hours (24 steps) simultaneously.
+* **Sliding Window Approach**: A window of 4 hours (48 steps) of historical data is used to predict a horizon of 2 hours (24 steps) simultaneously (Direct Multi-step).
 * **Importance**: 24-step prediction (2 hours ahead) is critical for grid operators to manage supply-demand balance and prevent blackouts.
 * **LSTM Performance**: The LSTM architecture uses its hidden states to maintain a representation of recent history, making it robust for sequential multi-output tasks.
 

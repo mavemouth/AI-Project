@@ -18,7 +18,7 @@ def main():
 
     # 1. Pipeline Start
     df_raw = load_data('../powerdemand_5min_2021_to_2024_with weather.csv')
-    df_raw = df_raw.iloc[-5000:] # Subsample for speed
+    df_raw = df_raw.iloc[-100000:] # Increased dataset size for better learning
     df_clean, anom_idx = process_anomalies(df_raw)
     df_feat = add_comprehensive_features(df_clean)
     train_df, test_df = get_train_test_split(df_feat)
@@ -83,10 +83,10 @@ def main():
         
         lstm = factory.build_multistep_lstm((WINDOW, len(feat_names)), HORIZON)
         import keras
-        es = keras.callbacks.EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+        es = keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
         
         history = lstm.fit(X_lstm_tr, y_lstm_tr, # All samples (subset)
-                          validation_split=0.1, epochs=3, batch_size=64, 
+                          validation_split=0.1, epochs=50, batch_size=64, 
                           callbacks=[es], verbose=1)
         
         y_pred_lstm = lstm.predict(X_lstm_ts)
@@ -124,6 +124,16 @@ def main():
     print("- Peak demand occurs consistently between 18:00 and 21:00.")
     
     print("\nPipeline Complete!")
+    
+    # Save models and scalers for dashboard/SHAP
+    import joblib
+    os.makedirs('models', exist_ok=True)
+    joblib.dump(xgb, 'models/xgb_model.pkl')
+    joblib.dump(scaler_x, 'models/scaler_x.pkl')
+    joblib.dump(scaler_y, 'models/scaler_y.pkl')
+    if factory.KERAS_AVAILABLE:
+        lstm.save('models/lstm_model.keras')
+    print("Models and scalers saved to 'models/' directory.")
 
 if __name__ == "__main__":
     main()

@@ -19,15 +19,15 @@ class ModelFactory:
 
     @staticmethod
     def get_multistep_xgboost():
-        # High n_estimators and appropriate depth for multi-output
         base_xgb = XGBRegressor(
-            n_estimators=800,
-            learning_rate=0.05,
-            max_depth=7,
+            n_estimators=600,
+            learning_rate=0.08,
+            max_depth=6,
             subsample=0.8,
             colsample_bytree=0.8,
             random_state=42,
-            n_jobs=-1
+            n_jobs=-1,
+            tree_method='hist' # Optimization for speed on large datasets
         )
         return MultiOutputRegressor(base_xgb)
 
@@ -58,9 +58,9 @@ def create_sequences_multistep(data, target, window_size, horizon=24):
     return np.array(X), np.array(y)
 
 def create_tabular_multistep(data, target, horizon=24):
-    # For ML models, we use current feature set to predict next N steps
+    # For ML models, we use current feature set to predict next N steps (t+1 ... t+horizon)
     X, y = [], []
-    for i in range(len(data) - horizon + 1):
-        X.append(data.iloc[i].values) # Features at time T
-        y.append(target[i : i + horizon]) # Targets for T to T+horizon-1
+    for i in range(len(data) - horizon):
+        X.append(data.iloc[i].values) # Features at time T (includes lags up to T and rolling up to T)
+        y.append(target[i + 1 : i + 1 + horizon]) # Targets for T+1 to T+horizon
     return np.array(X), np.array(y)
