@@ -3,11 +3,9 @@ import pandas as pd
 import os
 from PIL import Image
 import joblib
-try:
-    import torch
-    LSTM_AVAILABLE = True
-except ImportError:
-    LSTM_AVAILABLE = False
+
+# Deep Learning (LSTM) is disabled in this deployment to ensure Python 3.14 compatibility
+LSTM_AVAILABLE = False
 
 # Set page config for a premium feel
 st.set_page_config(
@@ -60,9 +58,9 @@ if not os.path.exists(METRICS_FILE):
 else:
     metrics_df = pd.read_csv(METRICS_FILE)
     
-    # 🌟 LSTM Availability Check & Filtering
+    # 🌟 Deep Learning (LSTM) Check & Filtering
     if not LSTM_AVAILABLE:
-        st.warning("🤖 **LSTM model not available** in deployment due to environment limitations (Python 3.14 compatibility). Showing results for the best available model (XGBoost).")
+        st.warning("🤖 **LSTM model disabled** for this deployment to ensure zero-build compatibility with Python 3.14. Showing the highest performing statistical model (XGBoost).")
         metrics_df = metrics_df[metrics_df['Model'] != 'LSTM'].reset_index(drop=True)
 
     st.title("⚡ AI-Powered Electricity Demand Forecasting")
