@@ -58,10 +58,7 @@ if not os.path.exists(METRICS_FILE):
 else:
     metrics_df = pd.read_csv(METRICS_FILE)
     
-    # 🌟 Deep Learning (LSTM) Check & Filtering
-    if not LSTM_AVAILABLE:
-        st.warning("🤖 **LSTM model disabled** for this deployment to ensure zero-build compatibility with Python 3.14. Showing the highest performing statistical model (XGBoost).")
-        metrics_df = metrics_df[metrics_df['Model'] != 'LSTM'].reset_index(drop=True)
+
 
     st.title("⚡ AI-Powered Electricity Demand Forecasting")
     st.subheader("Model Validation & Explainability Dashboard")
@@ -138,4 +135,4 @@ else:
 
 # Footer
 st.markdown("---")
-st.markdown("<p style='text-align: center;'>Created by Aditya and Manvi </p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center;'>Created with ❤️ by Group-18</p>", unsafe_allow_html=True)

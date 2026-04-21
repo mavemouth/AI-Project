@@ -1,7 +1,9 @@
 import os
+import random
+import numpy as np
+import torch
 os.environ["KERAS_BACKEND"] = "torch"
 
-import numpy as np
 try:
     import keras
     from keras.models import Sequential
@@ -14,53 +16,61 @@ from sklearn.linear_model import LinearRegression
 from xgboost import XGBRegressor
 from sklearn.multioutput import MultiOutputRegressor
 
+def set_seeds(seed=42):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
 class ModelFactory:
     KERAS_AVAILABLE = KERAS_AVAILABLE
-
+    
     @staticmethod
-    def get_multistep_xgboost():
+    def get_direct_xgboost():
+        # Strong hyperparameters as requested
         base_xgb = XGBRegressor(
-            n_estimators=600,
-            learning_rate=0.08,
-            max_depth=6,
-            subsample=0.8,
-            colsample_bytree=0.8,
+            n_estimators=800,
+            max_depth=7, # Increased depth for more complexity
+            learning_rate=0.03, # Slightly faster learning
+            subsample=0.85,
+            colsample_bytree=0.85,
+            reg_lambda=1.5,
+            reg_alpha=0.2,
             random_state=42,
             n_jobs=-1,
-            tree_method='hist' # Optimization for speed on large datasets
+            tree_method='hist'
         )
         return MultiOutputRegressor(base_xgb)
 
     @staticmethod
-    def get_linear_base():
+    def get_linear_simple():
         return LinearRegression()
 
     @staticmethod
-    def build_multistep_lstm(input_shape, output_steps=24):
+    def build_restored_lstm(input_shape, output_steps=24):
+        set_seeds()
         model = Sequential([
             Input(shape=input_shape),
-            LSTM(128, return_sequences=True),
-            Dropout(0.2),
-            LSTM(64),
-            Dropout(0.2),
-            Dense(32, activation='relu'),
+            # Robust LSTM architecture
+            LSTM(128, return_sequences=False),
+            Dropout(0.1),
+            Dense(64, activation='relu'),
             Dense(output_steps)
         ])
-        model.compile(optimizer='adam', loss='mse')
+        model.compile(optimizer=keras.optimizers.Adam(learning_rate=0.001), loss='mse')
         return model
 
 def create_sequences_multistep(data, target, window_size, horizon=24):
     X, y = [], []
-    # target is the 1D array of power demand
     for i in range(len(data) - window_size - horizon + 1):
         X.append(data.iloc[i : i + window_size].values)
         y.append(target[i + window_size : i + window_size + horizon])
     return np.array(X), np.array(y)
 
-def create_tabular_multistep(data, target, horizon=24):
-    # For ML models, we use current feature set to predict next N steps (t+1 ... t+horizon)
+def create_tabular_direct(data, target, horizon=24):
     X, y = [], []
     for i in range(len(data) - horizon):
-        X.append(data.iloc[i].values) # Features at time T (includes lags up to T and rolling up to T)
-        y.append(target[i + 1 : i + 1 + horizon]) # Targets for T+1 to T+horizon
+        X.append(data.iloc[i].values)
+        y.append(target[i + 1 : i + 1 + horizon])
     return np.array(X), np.array(y)
